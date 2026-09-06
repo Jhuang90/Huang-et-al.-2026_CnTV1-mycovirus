@@ -5,4 +5,5 @@ Data, analyses, and resources for Huang et al. (2026) on the CnTV1 mycovirus.
 
 - [sRNA_Viewer](sRNA_Viewer/README.md): small RNA-seq coverage visualization by RNA length and strand, with optional GFF3 annotation tracks. Includes the script, documentation, MIT license, and example outputs.
 - [smallRNA SAM read-length counter](smallRNA/README.md): Perl utility for counting primary mapped SAM records by read length and biological 5′ nucleotide, with forward/reverse summaries, alignment filtering, and optional contig exclusion.
-- [Sources and versions](SOURCE.md): origins, pinned commits, authorship, and licenses for both included analysis tools.
+- [RIBBON RUNNER](ribbonrunner/README.md): automated whole-genome synteny pipeline that runs adjacent-pair MUMmer alignments and produces publication-quality SVG ribbon figures.
+- [Sources and versions](SOURCE.md): origins, pinned commits, authorship, and licenses for all included analysis tools.

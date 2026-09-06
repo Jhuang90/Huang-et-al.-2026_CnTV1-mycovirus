@@ -1,6 +1,6 @@
 # Sources and versions
 
-This repository contains self-contained copies of two small-RNA analysis tools. The copies are pinned to the commits listed below and are not automatically synchronized with their standalone repositories.
+This repository contains self-contained copies of the analysis tools listed below. The copies are pinned to the commits listed here and are not automatically synchronized with their standalone repositories.
 
 ## sRNA_Viewer
 
@@ -24,3 +24,14 @@ The six source files were copied unchanged from the pinned commit. `Example.pdf`
 - License: [GNU General Public License v3.0](https://github.com/Jhuang90/smallRNA/blob/main/LICENSE)
 
 Only the updated script and its project-specific [`smallRNA/README.md`](smallRNA/README.md) are included here. The filename does not carry an internal version suffix.
+
+## RIBBON RUNNER
+
+- Included directory: [`ribbonrunner/`](ribbonrunner/)
+- Standalone repository: [Jhuang90/ribbonrunner](https://github.com/Jhuang90/ribbonrunner)
+- Version: 1.3.0
+- Source commit: [`3e74f37b3a665293fabc74c2a0c9896243fecd76`](https://github.com/Jhuang90/ribbonrunner/commit/3e74f37b3a665293fabc74c2a0c9896243fecd76)
+- Author and maintainer: Jun Huang
+- License: [MIT](ribbonrunner/LICENSE)
+
+The included snapshot contains the two pipeline scripts, Conda environment, documentation, changelog, license, and bundled synthetic example. Generated alignment intermediates are not included.
