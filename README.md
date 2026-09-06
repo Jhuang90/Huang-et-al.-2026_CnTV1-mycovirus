@@ -1,2 +1,7 @@
 # Huang-etal-2026-CnTV1-mycovirus
 Data, analyses, and resources for Huang et al. (2026) on the CnTV1 mycovirus.
+
+## Analysis tools
+
+- [sRNA_Viewer](sRNA_Viewer/README.md): small RNA-seq coverage visualization by RNA length and strand, with optional GFF3 annotation tracks. Includes the script, documentation, MIT license, and example outputs.
+- [Source and version](sRNA_Viewer/SOURCE.md): origin and pinned version of the included tool.

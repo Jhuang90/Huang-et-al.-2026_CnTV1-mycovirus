@@ -1,0 +1,618 @@
+#!/usr/bin/env Rscript --vanilla
+
+# require platform "unix". Sorry windows !
+if (.Platform$OS.type != "unix") {
+  stop('.Platform$OS.type of your device must be "unix"!')
+}
+
+# Load required libraries, quietly
+if (!suppressPackageStartupMessages(require(docopt))) {
+  stop("R package docopt is required, but could not be loaded. Make sure it is installed!")
+}
+if (!suppressPackageStartupMessages(require(tidyverse))) {
+  stop("R package tidyverse is required, but could not be loaded. Make sure it is installed!")
+}
+if (!suppressPackageStartupMessages(require(cowplot))) {
+  stop("R package cowplot is required, but could not be loaded. Make sure it is installed!")
+}
+if (!suppressPackageStartupMessages(require(IRanges))) {
+  stop("R package IRanges is required, but could not be loaded. Make sure it is installed!")
+}
+
+# Require samtools in PATH
+if (grepl('samtools', as.vector(Sys.which("samtools"))[1]) == FALSE) {
+  stop(paste("sRNA_Viewer requires executable samtools, but",
+             "samtools was not found in the PATH:", Sys.getenv("PATH")))
+}
+# Require tabix in PATH
+if (grepl('tabix', as.vector(Sys.which("tabix"))[1]) == FALSE) {
+  stop(paste("sRNA_Viewer requires executable tabix, but",
+             "tabix was not found in the PATH:", Sys.getenv("PATH")))
+}
+
+# ---------------------------------------------------------------------------
+# CLI definition
+# ---------------------------------------------------------------------------
+"sRNA_Viewer
+
+Usage:
+  sRNA_Viewer [-g TABIXGFF -l VLINE -r RGLIST -y YLIMIT --transcript TRANSCRIPT] -c COORDINATES -b BAMLIST -p OUTPUTFILE
+  sRNA_Viewer -h | --help
+  sRNA_Viewer -v | --version
+
+Options:
+  -g TABIXGFF           tabix-indexed GFF3 file containing transcript/mRNA, exon, and CDS features
+  -l VLINE              x-coordinate for an optional vertical dashed line
+  -r RGLIST             CSV: read groups in col 1, display names in col 2 (first BAM only)
+  -y YLIMIT             RPM split threshold: samples above YLIMIT get a free Y scale;
+                        all others are clamped to +/-YLIMIT RPM
+  --transcript TRANS    Restrict annotation track to this single transcript ID
+                        (e.g. --transcript CNAG_06757.t01)
+  -h --help             Print this help and quit
+  -v --version          Print version and quit
+
+Required:
+  -c COORDINATES        Genomic region  Chr:Start-Stop  (1-based, inclusive).
+                        Commas in numbers are accepted (e.g. 6:1,371,693-1,372,731).
+  -b BAMLIST            CSV: BAM file paths in col 1, display names in col 2
+  -p OUTPUTFILE         Output PDF path
+
+Annotation track behaviour:
+  * Both 'mRNA' and 'transcript' GFF features are shown as transcripts.
+  * Exon rectangles (salmon) and CDS rectangles (light blue) are both drawn
+    when present in the GFF.
+  * Use --transcript to display a single transcript of interest.
+
+" -> doc
+
+opts <- docopt(doc, version = '0.4.0')
+
+# ---------------------------------------------------------------------------
+# Parse arguments
+# ---------------------------------------------------------------------------
+pdf_file          <- opts$p
+bamlist           <- opts$b
+coords            <- opts$c
+tabix             <- opts$g
+RGlist            <- opts$r
+transcript_filter <- opts$transcript      # NULL when not supplied
+
+# Safe numeric conversion: returns NULL if option was not supplied, else a number.
+safe_numeric <- function(x) {
+  if (is.null(x)) return(NULL)
+  val <- suppressWarnings(as.numeric(x))
+  if (is.na(val)) return(NULL)
+  return(val)
+}
+vl     <- safe_numeric(opts$l)
+ylimit <- safe_numeric(opts$y)
+
+# Suppress the empty RPlots.pdf that R creates during non-interactive runs
+if (!interactive()) pdf(NULL)
+
+# ---------------------------------------------------------------------------
+# Interactive testing block (uncomment lines as needed)
+# ---------------------------------------------------------------------------
+if (interactive()) {
+  # pdf_file          <- "test.pdf"
+  # bamlist           <- "bamfiles.csv"
+  # coords            <- "2:123611-126918"
+  # tabix             <- "myH99gff_sorted.gff.gz"
+  # vl                <- NULL
+  # ylimit            <- 50
+  # transcript_filter <- "CNAG_06757.t01"
+}
+
+# ---------------------------------------------------------------------------
+# Parse and validate coordinates
+# Strip commas first so both "6:1371693-1372731" and "6:1,371,693-1,372,731" work.
+# ---------------------------------------------------------------------------
+coords    <- gsub(",", "", coords)
+parsed    <- str_match(coords, '([^:]+):(\\d+)-(\\d+)')
+chrom     <- parsed[1, 2]
+userStart <- as.numeric(parsed[1, 3])
+userEnd   <- as.numeric(parsed[1, 4])
+
+if (is.na(userStart) || is.na(userEnd)) {
+  stop("Could not parse coordinates. Use Chr:Start-Stop format (e.g. 6:1371693-1372731).")
+}
+if ((userEnd - userStart) > 100000) {
+  stop("Maximum interval size is 100,000 nts. Please revise your coordinates.")
+}
+
+# ---------------------------------------------------------------------------
+# Read input file lists
+# ---------------------------------------------------------------------------
+bams <- read_csv(bamlist, col_names = c("bamFilePath", "bamName"), col_types = "cc")
+
+if (!is.null(RGlist)) {
+  rgs <- read_csv(RGlist, col_names = c("RG", "RGName"), col_types = "cc")
+}
+
+# ===========================================================================
+# FUNCTION: sRNA_depths
+# Returns a tidy tibble: per-position, per-strand, per-size-class depth in RPM
+# ===========================================================================
+sRNA_depths <- function(bamfile, bamname, coords, rg) {
+
+  # --- Extract reads from the interval into a temporary BAM -----------------
+  view_cmd <- "samtools view -b"
+  if (!is.null(rg)) view_cmd <- paste(view_cmd, "-r", rg)
+  system(paste(view_cmd, bamfile, coords, ">", "temp.bam"))
+  system("samtools index temp.bam")
+
+  # --- Strand separation using samtools view then samtools depth -------------
+  # IMPORTANT: samtools depth -g/-G flags do NOT reliably filter by strand.
+  # The correct approach is to pre-filter by strand with samtools view first,
+  # write strand-specific temp BAMs, then run samtools depth on those.
+  #
+  # SAM flag 16 = read mapped to minus strand:
+  #   samtools view -F 16 = EXCLUDE flag-16 => plus-strand reads only
+  #   samtools view -f 16 = REQUIRE flag-16 => minus-strand reads only
+
+  # Create strand-specific temp BAMs
+  system("samtools view -b -F 16 temp.bam > temp_plus.bam  && samtools index temp_plus.bam")
+  system("samtools view -b -f 16 temp.bam > temp_minus.bam && samtools index temp_minus.bam")
+
+  # Internal helper: run samtools depth at each size threshold on a given BAM
+  build_raw_cov <- function(strand_bam) {
+    base <- paste("samtools depth -a -r", coords)
+    cov  <- read_tsv(I(system(paste(base, strand_bam), intern = TRUE)),
+                     col_names = c("Chromosome", "Position", "Coverage"),
+                     show_col_types = FALSE)
+    for (min_len in c(25, 24, 23, 22, 21)) {
+      label <- paste0(">", min_len - 1)
+      cov <- left_join(
+        cov,
+        read_tsv(I(system(paste(base, "-l", min_len, strand_bam), intern = TRUE)),
+                 col_names = c("Chromosome", "Position", label),
+                 show_col_types = FALSE),
+        by = c("Chromosome", "Position")
+      )
+    }
+    cov
+  }
+
+  # --- Plus strand ----------------------------------------------------------
+  Cov <- build_raw_cov("temp_plus.bam") %>%
+    mutate(
+      `<21` = Coverage - `>20`,
+      `21`  = Coverage - `>21` - `<21`,
+      `22`  = Coverage - `>22` - `21`  - `<21`,
+      `23`  = Coverage - `>23` - `22`  - `21` - `<21`,
+      `24`  = Coverage - `>24` - `23`  - `22` - `21` - `<21`
+    ) %>%
+    select(Chromosome, Position, `<21`, `21`, `22`, `23`, `24`, `>24`) %>%
+    mutate(Strand = "+")
+
+  # --- Minus strand (negated so values plot below zero) ---------------------
+  CovM <- build_raw_cov("temp_minus.bam") %>%
+    mutate(
+      `<21` = Coverage - `>20`,
+      `21`  = Coverage - `>21` - `<21`,
+      `22`  = Coverage - `>22` - `21`  - `<21`,
+      `23`  = Coverage - `>23` - `22`  - `21` - `<21`,
+      `24`  = Coverage - `>24` - `23`  - `22` - `21` - `<21`
+    ) %>%
+    mutate(across(c(`<21`, `21`, `22`, `23`, `24`, `>24`), ~ 0 - .x)) %>%
+    select(Chromosome, Position, `<21`, `21`, `22`, `23`, `24`, `>24`) %>%
+    mutate(Strand = "-")
+
+  # --- RPM normalisation ----------------------------------------------------
+  count_cmd <- "samtools view -c -F 256"
+  if (!is.null(rg)) count_cmd <- paste(count_cmd, "-r", rg)
+  n_reads <- as.numeric(system(paste(count_cmd, bamfile), intern = TRUE))
+
+  result <- bind_rows(Cov, CovM) %>%
+    mutate(bamName = bamname) %>%
+    mutate(across(c(`<21`, `21`, `22`, `23`, `24`, `>24`), ~ 1e6 * (.x / n_reads)))
+
+  system("rm -f temp.bam* temp_plus.bam* temp_minus.bam*")
+  return(result)
+}
+
+# ===========================================================================
+# Collect sRNA depth data across all BAMs / read-groups
+# ===========================================================================
+if (is.null(RGlist)) {
+  # One entry per BAM file
+  sRNAData <- sRNA_depths(bams$bamFilePath[1], bams$bamName[1], coords, NULL)
+  if (nrow(bams) > 1) {
+    for (i in 2:nrow(bams)) {
+      sRNAData <- bind_rows(sRNAData,
+                            sRNA_depths(bams$bamFilePath[i], bams$bamName[i], coords, NULL))
+    }
+  }
+} else {
+  # One entry per read-group from the first BAM
+  sRNAData <- sRNA_depths(bams$bamFilePath[1], rgs$RGName[1], coords, rgs$RG[1])
+  if (nrow(rgs) > 1) {
+    for (i in 2:nrow(rgs)) {
+      sRNAData <- bind_rows(sRNAData,
+                            sRNA_depths(bams$bamFilePath[1], rgs$RGName[i], coords, rgs$RG[i]))
+    }
+  }
+}
+
+# ===========================================================================
+# Tidy data and define colours
+# ===========================================================================
+sRNAData <- pivot_longer(sRNAData, cols = 3:8,
+                         names_to = "RNA Size", values_to = "RPM")
+
+sRNAcols <- c(
+  "lightgray",       # <21 nt
+  "blue",            # 21 nt
+  "mediumseagreen",  # 22 nt
+  "orange",          # 23 nt
+  "tomato",          # 24 nt
+  "darkgray"         # >24 nt
+)
+Lorder <- c("<21", "21", "22", "23", "24", ">24")
+
+
+# Drop all-zero rows but keep the first and last positions to anchor the X axis
+PosMin <- min(sRNAData$Position)
+PosMax <- max(sRNAData$Position)
+cov_plus  <- filter(sRNAData, Strand == "+",
+                    (RPM != 0 | Position %in% c(PosMin, PosMax)))
+cov_minus <- filter(sRNAData, Strand == "-",
+                    (RPM != 0 | Position %in% c(PosMin, PosMax)))
+
+# ===========================================================================
+# HELPER: make_sRNA_plot
+# Builds a single sRNA coverage ggplot panel.
+# ylim_val: if non-NULL, fixes Y axis to +/-ylim_val RPM via coord_cartesian.
+# ===========================================================================
+make_sRNA_plot <- function(plus_data, minus_data, ylim_val = NULL) {
+  p <- ggplot() +
+    geom_col(data = plus_data,
+             aes(x = Position, y = RPM,
+                 fill = factor(`RNA Size`, levels = Lorder)),
+             width = 1) +
+    geom_col(data = minus_data,
+             aes(x = Position, y = RPM,
+                 fill = factor(`RNA Size`, levels = Lorder)),
+             width = 1) +
+    scale_fill_manual(values = sRNAcols, name = "RNA length") +
+    facet_grid(bamName ~ .) +
+    geom_hline(yintercept = 0) +
+    theme_classic() +
+    labs(x = coords, y = "RPM")
+
+  if (!is.null(ylim_val) && !is.na(ylim_val)) {
+    p <- p + coord_cartesian(xlim = c(userStart, userEnd),
+                             ylim = c(-ylim_val, ylim_val)) +
+             scale_x_continuous(expand = c(0, 0))
+  } else {
+    p <- p + coord_cartesian(xlim = c(userStart, userEnd)) +
+             scale_x_continuous(expand = c(0, 0))
+  }
+
+  if (!is.null(vl) && !is.na(vl)) {
+    p <- p + geom_vline(xintercept = vl, lty = 2)
+  }
+  return(p)
+}
+
+# ===========================================================================
+# Build sRNA coverage panel(s)
+#
+# Without -y : single panel, one shared Y scale for all samples.
+# With    -y : samples whose max |RPM| exceeds YLIMIT go into a "high" panel
+#              with a free Y scale; the rest go into a "low" panel clamped to
+#              +/-YLIMIT. Both panels share the same X axis and are stacked.
+# ===========================================================================
+seqRows_split <- NULL
+psRNA_high    <- NULL
+psRNA_low     <- NULL
+
+if (!is.null(ylimit) && !is.na(ylimit)) {
+
+  max_per_sample <- sRNAData %>%
+    group_by(bamName) %>%
+    summarise(maxRPM = max(abs(RPM)), .groups = "drop")
+
+  high_samples <- max_per_sample %>% filter(maxRPM >  ylimit) %>% pull(bamName)
+  low_samples  <- max_per_sample %>% filter(maxRPM <= ylimit) %>% pull(bamName)
+
+  psRNA_high <- NULL
+  psRNA_low  <- NULL
+
+  if (length(high_samples) > 0) {
+    psRNA_high <- make_sRNA_plot(
+      filter(cov_plus,  bamName %in% high_samples),
+      filter(cov_minus, bamName %in% high_samples),
+      ylim_val = NULL
+    )
+  }
+  if (length(low_samples) > 0) {
+    psRNA_low <- make_sRNA_plot(
+      filter(cov_plus,  bamName %in% low_samples),
+      filter(cov_minus, bamName %in% low_samples),
+      ylim_val = ylimit
+    )
+  }
+
+  if (!is.null(psRNA_high) && !is.null(psRNA_low)) {
+    psRNA <- plot_grid(psRNA_high, psRNA_low,
+                       nrow = 2, align = "v", axis = "lrtb",
+                       rel_heights = c(length(high_samples), length(low_samples)))
+  } else {
+    psRNA <- if (!is.null(psRNA_high)) psRNA_high else psRNA_low
+  }
+  seqRows_split <- length(high_samples) + length(low_samples)
+
+  message(sprintf("Y-axis split at %g RPM.", ylimit))
+  message(paste("  High-coverage (free scale) :", paste(high_samples, collapse = ", ")))
+  message(paste("  Low-coverage  (+/-", ylimit, "RPM) :", paste(low_samples, collapse = ", ")))
+
+} else {
+  # Single panel — all samples share the same Y scale
+  psRNA <- make_sRNA_plot(cov_plus, cov_minus, ylim_val = NULL)
+}
+
+# ===========================================================================
+# Annotation track  (requires -g TABIXGFF)
+#
+# ORIGINAL behaviour restored:
+#   * Both 'mRNA' and 'transcript' GFF features are treated as transcripts.
+#   * Exon rectangles (salmon) AND CDS rectangles (light blue) are both drawn.
+#   * --transcript optionally restricts display to one transcript ID.
+#
+# FIX: Ybins initialised to NULL here so the final layout block never throws
+# "object 'Ybins' not found" when the tabix block is skipped entirely.
+# ===========================================================================
+Ybins <- NULL
+
+if (!is.null(tabix)) {
+  tabLines <- system(paste("tabix", tabix, coords), intern = TRUE)
+  # Annotation panel: use theme_classic with a dummy geom to force the x scale
+  # to match exactly the sRNA panels. The dummy point is invisible.
+  pmRNA <- ggplot() +
+    geom_blank(aes(x = c(userStart, userEnd), y = c(0, 1))) +
+    theme_classic() +
+    theme(axis.line   = element_blank(),
+          axis.ticks  = element_blank(),
+          axis.text   = element_blank(),
+          axis.title  = element_blank(),
+          plot.background  = element_blank(),
+          panel.background = element_blank(),
+          panel.border     = element_blank()) +
+    scale_x_continuous(expand = c(0, 0),
+                       limits = c(userStart, userEnd)) +
+    coord_cartesian(xlim = c(userStart, userEnd))
+} else {
+  tabLines <- NULL
+  pmRNA    <- NULL
+}
+
+if (length(tabLines) > 0) {
+
+  tabLines <- paste0(tabLines, "\n")   # ensures read_tsv works on single-line input
+
+  tabData <- read_tsv(tabLines,
+                      col_names = c("Chromosome", "Source", "Type",
+                                    "Start", "End", "Score",
+                                    "Strand", "Phase", "Attributes"),
+                      show_col_types = FALSE)
+
+  # Keep all transcript types (mRNA, ncRNA, lncRNA, etc.), exon, and CDS.
+  # ncRNA and other non-coding transcript types are included so they are visible.
+  transcript_types <- c("mRNA", "transcript", "ncRNA", "lncRNA",
+                        "pseudogenic_transcript", "snoRNA", "snRNA",
+                        "tRNA", "rRNA", "miRNA", "pre_miRNA")
+  tabData  <- filter(tabData, Type %in% c(transcript_types, "exon", "CDS"))
+  mRNAData <- filter(tabData, Type %in% transcript_types)
+  CDSData  <- filter(tabData, Type == "CDS")
+  exonData <- filter(tabData, Type == "exon")
+
+  # Optional: restrict to a single transcript via --transcript
+  if (!is.null(transcript_filter)) {
+    mRNAData <- filter(mRNAData,
+                       str_detect(Attributes,
+                                  paste0("ID=", transcript_filter, "([;]|$)")))
+    if (nrow(CDSData) > 0) {
+      CDSData <- filter(CDSData,
+                        str_detect(Attributes,
+                                   paste0("Parent=", transcript_filter, "([;,]|$)")))
+    }
+    if (nrow(exonData) > 0) {
+      exonData <- filter(exonData,
+                         str_detect(Attributes,
+                                    paste0("Parent=", transcript_filter, "([;,]|$)")))
+    }
+  }
+
+  # Debug: report what was found in the interval
+  message(paste("Annotation: mRNAData rows =", nrow(mRNAData),
+                "| CDSData rows =", nrow(CDSData),
+                "| exonData rows =", nrow(exonData)))
+
+  # If no parent transcript row exists in the interval (e.g. the ncRNA/mRNA
+  # feature falls outside the query window but its exons are within it),
+  # synthesise a minimal parent row from the exon extents so it still plots.
+  if (nrow(mRNAData) == 0 && nrow(exonData) > 0) {
+    # Extract unique parent IDs from exon attributes
+    orphan_ids <- unique(str_match(exonData$Attributes, "Parent=([^;,]+)")[, 2])
+    orphan_ids <- orphan_ids[!is.na(orphan_ids)]
+
+    if (length(orphan_ids) > 0) {
+      # Apply transcript filter if set
+      if (!is.null(transcript_filter)) {
+        orphan_ids <- orphan_ids[orphan_ids == transcript_filter]
+      }
+      # Build one synthetic parent row per orphan ID using exon min/max coords
+      synth_rows <- lapply(orphan_ids, function(pid) {
+        ex <- filter(exonData, str_detect(Attributes, paste0("Parent=", pid, "([;,]|$)")))
+        if (nrow(ex) == 0) return(NULL)
+        tibble(
+          Chromosome = ex$Chromosome[1],
+          Source     = ex$Source[1],
+          Type       = "transcript",
+          Start      = min(ex$Start),
+          End        = max(ex$End),
+          Score      = ".",
+          Strand     = ex$Strand[1],
+          Phase      = ".",
+          Attributes = paste0("ID=", pid, ";Name=", pid)
+        )
+      })
+      synth_rows <- bind_rows(synth_rows)
+      if (nrow(synth_rows) > 0) {
+        mRNAData <- synth_rows
+        message(paste("Note: parent transcript row(s) not in query window.",
+                      "Synthesised from exon extents:", paste(orphan_ids, collapse = ", ")))
+        message(paste("  Synthetic transcript span: Start =", synth_rows$Start[1],
+                      "| End =", synth_rows$End[1],
+                      "| Strand =", synth_rows$Strand[1]))
+      }
+    }
+  }
+
+  if (nrow(mRNAData) > 0) {
+
+    # Assign non-overlapping Y levels (transcript packing)
+    Ybins    <- disjointBins(IRanges(start = mRNAData$Start, end = mRNAData$End))
+    mRNAData <- mRNAData %>%
+      mutate(Y  = Ybins,
+             ID = str_match(Attributes, "ID=([^;]+)")[, 2])
+
+    # Y-level look-up for exon and CDS features (matched via Parent= attribute)
+    mRNA_Ys <- select(mRNAData, Y, ID)
+
+    if (nrow(CDSData) > 0) {
+      CDSData <- CDSData %>%
+        mutate(ID = str_match(Attributes, "Parent=([^;,]+)")[, 2]) %>%
+        left_join(mRNA_Ys, by = "ID")
+    }
+
+    if (nrow(exonData) > 0) {
+      exonData <- exonData %>%
+        mutate(ID = str_match(Attributes, "Parent=([^;,]+)")[, 2]) %>%
+        left_join(mRNA_Ys, by = "ID")
+    }
+
+    # Arrow direction is strand-dependent.
+    # Clip arrow endpoints to the user-specified window so the arrowhead
+    # does not protrude beyond the requested coordinate range.
+    mRNAData <- mRNAData %>%
+      mutate(
+        ArrowStart = if_else(Strand == "+",
+                             pmax(Start, userStart),
+                             pmin(End,   userEnd)),
+        ArrowEnd   = if_else(Strand == "+",
+                             pmin(End,   userEnd),
+                             pmax(Start, userStart))
+      )
+
+    # Exon rectangles (salmon) — drawn first so CDS appears on top
+    if (nrow(exonData) > 0) {
+      pmRNA <- pmRNA +
+        geom_rect(data = exonData,
+                  aes(xmin = Start, xmax = End,
+                      ymin = Y - 0.15, ymax = Y + 0.15),
+                  fill = "salmon")
+    }
+
+    # CDS rectangles (light blue) — drawn on top of exons
+    if (nrow(CDSData) > 0) {
+      pmRNA <- pmRNA +
+        geom_rect(data = CDSData,
+                  aes(xmin = Start, xmax = End,
+                      ymin = Y - 0.35, ymax = Y + 0.35),
+                  fill = "lightblue")
+    }
+
+    # Transcript backbone: plain line from start to end (no arrowhead overshoot)
+    # Then a short arrowhead-only segment at the 3' end
+    pmRNA <- pmRNA +
+      geom_segment(data = mRNAData,
+                   aes(x = ArrowStart, y = Y, xend = ArrowEnd, yend = Y)) +
+      geom_segment(data = mRNAData,
+                   aes(x = if_else(Strand == "+",
+                                   ArrowEnd - (ArrowEnd - ArrowStart) * 0.05,
+                                   ArrowEnd + (ArrowStart - ArrowEnd) * 0.05),
+                       y = Y,
+                       xend = ArrowEnd, yend = Y),
+                   arrow = arrow(length = unit(0.15, "cm"))) +
+      geom_text(data = mRNAData,
+                aes(x = (Start + End) / 2, y = Y + 0.5, label = ID),
+                check_overlap = TRUE)
+  }
+}
+
+# Optional vertical line on the annotation panel
+if (!is.null(pmRNA) && !is.null(vl) && !is.na(vl)) {
+  pmRNA <- pmRNA + geom_vline(xintercept = vl, lty = 2)
+}
+
+# ===========================================================================
+# Assemble final plot and save as PDF
+# ===========================================================================
+if (is.null(RGlist)) {
+  seqRows <- nrow(bams)
+} else {
+  seqRows <- nrow(rgs)
+}
+if (!is.null(seqRows_split)) seqRows <- seqRows_split
+
+# ===========================================================================
+# Final assembly: collect all panels into a flat list so plot_grid never
+# nests a plot_grid inside another plot_grid (which breaks vertical alignment).
+# ===========================================================================
+annot_h <- if (!is.null(Ybins)) max(0.33 * max(Ybins), 1) else 1
+
+if (!is.null(pmRNA)) {
+  if (!is.null(ylimit) && !is.na(ylimit) &&
+      !is.null(psRNA_high) && !is.null(psRNA_low)) {
+    # Three panels: annotation + high-coverage + low-coverage
+    panel_list <- list(pmRNA, psRNA_high, psRNA_low)
+    rh         <- c(annot_h, length(high_samples), length(low_samples))
+  } else {
+    # Two panels: annotation + single sRNA panel
+    panel_list <- list(pmRNA, psRNA)
+    rh         <- c(annot_h, seqRows)
+  }
+} else {
+  if (!is.null(ylimit) && !is.na(ylimit) &&
+      !is.null(psRNA_high) && !is.null(psRNA_low)) {
+    # Two panels: high-coverage + low-coverage, no annotation
+    panel_list <- list(psRNA_high, psRNA_low)
+    rh         <- c(length(high_samples), length(low_samples))
+  } else {
+    # Single panel, no annotation
+    panel_list <- list(psRNA)
+    rh         <- seqRows
+  }
+}
+
+vInches <- sum(rh)
+
+# Extract the legend from the first sRNA panel so all panels share one legend.
+# Then remove legends from all panels and align them without legend interference.
+# This ensures the annotation panel plot area matches the sRNA panel plot area.
+get_legend_from <- if (!is.null(psRNA_high)) psRNA_high else psRNA
+shared_legend <- get_legend(get_legend_from)
+
+# Remove legends from all panels
+panel_list_no_legend <- lapply(panel_list, function(p) {
+  if (inherits(p, "gg")) {
+    p + theme(legend.position = "none")
+  } else {
+    p  # already a plot_grid object or NULL
+  }
+})
+
+# Stack panels without legends — now all plot areas are the same width
+panels_aligned <- plot_grid(plotlist = panel_list_no_legend,
+                            align = "v", axis = "lrtb",
+                            nrow = length(panel_list),
+                            rel_heights = rh)
+
+# Add the shared legend back on the right
+finalP <- plot_grid(panels_aligned, shared_legend,
+                    nrow = 1,
+                    rel_widths = c(1, 0.15))
+
+ggsave2(pdf_file, plot = finalP, width = 7, height = vInches, units = "in")
