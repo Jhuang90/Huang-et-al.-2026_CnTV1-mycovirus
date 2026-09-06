@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+
+# Pipeline intermediates
+*.delta
+*.coords
+*.fai
+*_renamed.fasta
+logs/
+run_pipeline.sh
+ribbonrunner.sb
+
+# Generated example data and its output
+examples/*.fasta
+examples/strains.txt
+examples/demo/

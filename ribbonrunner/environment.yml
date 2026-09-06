@@ -1,0 +1,17 @@
+name: ribbonrunner
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.9
+  - matplotlib>=3.7
+  # mummer4 provides nucmer, delta-filter and show-coords.
+  # MUMmer 3.23 also works, but does not support --threads.
+  - mummer4>=4.0
+#
+# Create with:
+#     conda env create -f environment.yml
+#     conda activate ribbonrunner
+#
+# samtools and seqkit were required up to v1.2.1. They are not needed
+# any more: FASTA rewrapping and .fai indexing are done in Python.
