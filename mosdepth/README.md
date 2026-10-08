@@ -4,8 +4,6 @@
 
 This notebook maps paired-end whole-genome DNA reads with minimap2, filters alignments at MAPQ >= 30, computes mean depth in 500 bp windows with mosdepth, and plots coverage normalized to each sample's median window depth.
 
-The code cells are unchanged from Jun Huang's original notebook. Citation information and a brief clarification of coverage interpretation are included in the notebook text.
-
 ## Requirements
 
 - Command line: `minimap2`, `samtools`, `mosdepth`, and Bash.
