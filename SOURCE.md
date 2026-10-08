@@ -41,7 +41,7 @@ The included snapshot contains the two pipeline scripts, Conda environment, docu
 - Included directory: [`mosdepth/`](mosdepth/)
 - Source: `mosdepth_coverage_plot.ipynb`, supplied by Jun Huang on 2026-10-08.
 - Original file SHA-256: `2b61d54e348dd3d6e151b5e3ed61d9c3b845b895b614c45a16266ef3017c9972`
-- Repository copy: reviewed and updated with command failure handling, input validation, zero-median protection, and clarified relative-coverage interpretation.
+- Repository copy: all code cells match the supplied original notebook exactly. Only citation text and relative-coverage interpretation wording were added or clarified.
 - Dependencies, usage, and validation scope: [`mosdepth/README.md`](mosdepth/README.md).
 
 The original notebook was preserved outside this repository. This contribution contains placeholder sample names and no sequencing data or executed outputs.
