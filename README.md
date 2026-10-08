@@ -14,4 +14,5 @@ This repository accompanies our [bioRxiv preprint](https://www.biorxiv.org/conte
 - [sRNA_Viewer](sRNA_Viewer/README.md): small RNA-seq coverage visualization by RNA length and strand, with optional GFF3 annotation tracks. Includes the script, documentation, MIT license, and example outputs.
 - [smallRNA SAM read-length counter](smallRNA/README.md): Perl utility for counting primary mapped SAM records by read length and biological 5′ nucleotide, with forward/reverse summaries, alignment filtering, and optional contig exclusion.
 - [RIBBON RUNNER](ribbonrunner/README.md): automated whole-genome synteny pipeline that runs adjacent-pair MUMmer alignments and produces publication-quality SVG ribbon figures.
+- [mosdepth coverage notebook](mosdepth/README.md): paired-end DNA read mapping, 500 bp window depth, and genome-wide coverage plots normalized to each sample's median window depth.
 - [Sources and versions](SOURCE.md): origins, pinned commits, authorship, and licenses for all included analysis tools.

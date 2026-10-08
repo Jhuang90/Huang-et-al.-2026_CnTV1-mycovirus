@@ -1,6 +1,6 @@
 # Sources and versions
 
-This repository contains self-contained copies of the analysis tools listed below. The copies are pinned to the commits listed here and are not automatically synchronized with their standalone repositories.
+This repository contains self-contained copies of the analysis tools listed below. Imported repository snapshots are pinned to the commits listed here and are not automatically synchronized with their standalone repositories. Locally contributed tools are identified separately below.
 
 ## sRNA_Viewer
 
@@ -35,3 +35,13 @@ Only the updated script and its project-specific [`smallRNA/README.md`](smallRNA
 - License: [MIT](ribbonrunner/LICENSE)
 
 The included snapshot contains the two pipeline scripts, Conda environment, documentation, changelog, license, and bundled synthetic example. Generated alignment intermediates are not included.
+
+## mosdepth coverage notebook
+
+- Included directory: [`mosdepth/`](mosdepth/)
+- Source: `mosdepth_coverage_plot.ipynb`, supplied by Jun Huang on 2026-10-08.
+- Original file SHA-256: `2b61d54e348dd3d6e151b5e3ed61d9c3b845b895b614c45a16266ef3017c9972`
+- Repository copy: reviewed and updated with command failure handling, input validation, zero-median protection, and clarified relative-coverage interpretation.
+- Dependencies, usage, and validation scope: [`mosdepth/README.md`](mosdepth/README.md).
+
+The original notebook was preserved outside this repository. This contribution contains placeholder sample names and no sequencing data or executed outputs.
