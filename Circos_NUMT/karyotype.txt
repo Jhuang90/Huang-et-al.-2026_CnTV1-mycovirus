@@ -1,0 +1,15 @@
+chr - NRHc5010_Chr1 1 0 2043413 chr1 color=grey
+chr - NRHc5010_Chr2 2 0 1685637 chr2 color=grey
+chr - NRHc5010_Chr3 3 0 1340789 chr3 color=grey
+chr - NRHc5010_Chr4 4 0 1118639 chr4 color=grey
+chr - NRHc5010_Chr5 5 0 1815262 chr5 color=grey
+chr - NRHc5010_Chr6 6 0 1450501 chr6 color=grey
+chr - NRHc5010_Chr7 7 0 1380349 chr7 color=grey
+chr - NRHc5010_Chr8 8 0 1351239 chr8 color=grey
+chr - NRHc5010_Chr9 9 0 1171395 chr9 color=grey
+chr - NRHc5010_Chr10 10 0 1068560 chr10 color=grey
+chr - NRHc5010_Chr11 11 0 2021367 chr11 color=grey
+chr - NRHc5010_Chr12 12 0 767474 chr12 color=grey
+chr - NRHc5010_Chr13 13 0 725743 chr13 color=grey
+chr - NRHc5010_Chr14 14 0 944832 chr14 color=grey
+chr - NRHc5010_MT MT 0 27977 MT color=green
