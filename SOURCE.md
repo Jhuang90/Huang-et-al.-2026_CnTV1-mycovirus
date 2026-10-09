@@ -41,3 +41,13 @@ The included snapshot contains the two pipeline scripts, Conda environment, docu
 - Notebook: [`mosdepth/mosdepth_coverage_plot.ipynb`](mosdepth/mosdepth_coverage_plot.ipynb)
 - Author: Jun Huang
 - Dependencies and usage: [`mosdepth/README.md`](mosdepth/README.md).
+
+## Circos NUMT plot
+
+- Included directory: [`Circos_NUMT/`](Circos_NUMT/)
+- Analysis and configuration author: Jun Huang
+- Plotting software: Circos 0.69-8
+- Inputs: NRHc5010 mitochondrial annotation and mitochondrial-versus-nuclear BLAST results
+- Dependencies and usage: [`Circos_NUMT/README.md`](Circos_NUMT/README.md)
+
+The V2 track tables preserve the intervals displayed in the original plot. Their relationship to the supplied MFannot feature boundaries is documented in [`Circos_NUMT/TRACK_COORDINATES.md`](Circos_NUMT/TRACK_COORDINATES.md).
