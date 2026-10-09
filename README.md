@@ -5,7 +5,7 @@ Data, analyses, and resources for Huang et al. (2026) on the CnTV1 mycovirus.
 
 This repository accompanies our [bioRxiv preprint](https://www.biorxiv.org/content/10.64898/2026.09.15.751489v1).
 
-**If you use the data, code, analyses, or other resources in this repository in your research, please cite our preprint:**
+**If you use the code, data, or plotting files from this repository in your research, please cite the following preprint:**
 
 > Huang, J., Larmore, C. J., Davenport, T. C., Averette, A. F., Choi, Y., Debat, H., Gupta, P., Babaian, A., Meneghini, M. D., Sun, S., & Heitman, J. (2026). **An ancestral mitochondrial DNA insertion disrupts RNAi and enables persistence of a novel mycovirus in *Cryptococcus neoformans*.** bioRxiv [Preprint]. https://doi.org/10.64898/2026.09.15.751489
 
