@@ -14,8 +14,6 @@ This directory contains the data and configuration needed to reproduce the NRHc5
 - `NRHc5010_circos_v2.conf`: Circos V2 configuration.
 - `5010_mtcircos_V2.png` and `5010_mtcircos_V2.svg`: regenerated plot output.
 
-The highlight and label tables reproduce the graphical intervals in the original V2 plot. Some plotted intervals differ from the MFannot feature boundaries; details are provided in [TRACK_COORDINATES.md](TRACK_COORDINATES.md).
-
 ## Run
 
 The configuration was tested with Circos 0.69-8. Use the Perl environment associated with your Circos installation, including its required modules, configuration files, and fonts.
