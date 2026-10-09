@@ -15,4 +15,5 @@ This repository accompanies our [bioRxiv preprint](https://www.biorxiv.org/conte
 - [smallRNA SAM read-length counter](smallRNA/README.md): Perl utility for counting primary mapped SAM records by read length and biological 5′ nucleotide, with forward/reverse summaries, alignment filtering, and optional contig exclusion.
 - [RIBBON RUNNER](ribbonrunner/README.md): automated whole-genome synteny pipeline that runs adjacent-pair MUMmer alignments and produces publication-quality SVG ribbon figures.
 - [mosdepth coverage notebook](mosdepth/README.md): paired-end DNA read mapping, 500 bp window depth, and genome-wide coverage plots normalized to each sample's median window depth.
+- [Circos NUMT plot](Circos_NUMT/README.md): NRHc5010 mitochondrial annotation, mitochondrial-versus-nuclear BLAST results, complete Circos V2 inputs, and regenerated PNG/SVG output.
 - [Sources and versions](SOURCE.md): origins, pinned commits, authorship, and licenses for all included analysis tools.
