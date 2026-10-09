@@ -216,24 +216,24 @@
 <g id="plot1">
 <g id="plot1-axis">
 </g>
-<text x="1377.1" y="210.0" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(650.6,1377.1,210.0)" >nad4L</text>
-<text x="705.5" y="217.0" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(68.3,705.5,217.0)" >rnpB</text>
-<text x="378.6" y="448.6" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(42.5,378.6,448.6)" >nad1</text>
-<text x="1289.6" y="181.0" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(644.8,1289.6,181.0)" >nad4</text>
-<text x="1459.9" y="247.2" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(656.4,1459.9,247.2)" >nad5</text>
-<text x="1571.5" y="314.7" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(664.7,1571.5,314.7)" >nad6</text>
-<text x="1930.0" y="854.6" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(706.8,1930.0,854.6)" >nad2</text>
-<text x="1943.0" y="927.3" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(711.5,1943.0,927.3)" >nad3</text>
-<text x="552.5" y="298.3" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(57.1,552.5,298.3)" >cob1</text>
-<text x="1184.9" y="158.7" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(637.9,1184.9,158.7)" >cox3</text>
-<text x="1856.1" y="646.6" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(692.8,1856.1,646.6)" >cox1</text>
-<text x="1949.5" y="991.1" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(715.6,1949.5,991.1)" >cox2</text>
-<text x="1764.1" y="499.9" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(681.6,1764.1,499.9)" >atp6</text>
-<text x="1792.0" y="538.2" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(684.6,1792.0,538.2)" >atp9</text>
-<text x="1902.9" y="758.2" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(700.4,1902.9,758.2)" >atp8</text>
-<text x="749.7" y="200.1" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(71.3,749.7,200.1)" >rps3</text>
-<text x="1702.2" y="427.8" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(675.9,1702.2,427.8)" >rns</text>
-<text x="963.5" y="152.7" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(85.1,963.5,152.7)" >rnl</text>
+<text x="1379.2" y="210.8" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(650.8,1379.2,210.8)" >nad4L</text>
+<text x="706.1" y="216.7" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(68.3,706.1,216.7)" >rnpB</text>
+<text x="379.2" y="447.9" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(42.5,379.2,447.9)" >nad1</text>
+<text x="1291.8" y="181.6" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(644.9,1291.8,181.6)" >nad4</text>
+<text x="1461.1" y="247.8" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(656.5,1461.1,247.8)" >nad5</text>
+<text x="1571.9" y="315.1" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(664.7,1571.9,315.1)" >nad6</text>
+<text x="1930.4" y="856.5" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(707.0,1930.4,856.5)" >nad2</text>
+<text x="1943.5" y="930.4" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(711.7,1943.5,930.4)" >nad3</text>
+<text x="553.7" y="297.5" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(57.2,553.7,297.5)" >cob1</text>
+<text x="1185.6" y="158.8" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(638.0,1185.6,158.8)" >cox3</text>
+<text x="1857.5" y="649.4" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(693.0,1857.5,649.4)" >cox1</text>
+<text x="1949.7" y="994.7" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(715.8,1949.7,994.7)" >cox2</text>
+<text x="1766.0" y="502.4" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(681.8,1766.0,502.4)" >atp6</text>
+<text x="1794.0" y="541.0" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(684.9,1794.0,541.0)" >atp9</text>
+<text x="1903.8" y="760.8" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(700.5,1903.8,760.8)" >atp8</text>
+<text x="751.7" y="199.4" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(71.4,751.7,199.4)" >rps3</text>
+<text x="1704.7" y="430.4" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:start;fill:rgb(0,0,0);" transform="rotate(676.1,1704.7,430.4)" >rns</text>
+<text x="964.0" y="152.7" font-size="26.0px" font-family="CMUBright-Bold" style="text-anchor:end;fill:rgb(0,0,0);" transform="rotate(85.2,964.0,152.7)" >rnl</text>
 </g>
 <defs>
 </defs>
