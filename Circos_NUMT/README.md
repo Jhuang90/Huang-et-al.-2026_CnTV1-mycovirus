@@ -10,7 +10,7 @@ This directory contains the data and configuration needed to reproduce the NRHc5
 - `karyotype.txt`: chromosome lengths, order, and colors.
 - `NRHc5010_links2.txt`: 15 colored mitochondrial-to-nuclear links.
 - `NRHc5010_highlight_v2.txt`: 39 mitochondrial feature highlights.
-- `NRHc5010_mt_annot_gene_only_v2.txt`: 18 mitochondrial feature labels.
+- `NRHc5010_mt_annot_gene_only_v2.txt`: 18 mitochondrial feature labels derived from the MFannot annotation.
 - `NRHc5010_circos_v2.conf`: Circos V2 configuration.
 - `5010_mtcircos_V2.png` and `5010_mtcircos_V2.svg`: regenerated plot output.
 
@@ -27,7 +27,7 @@ mkdir -p output
 
 The command creates `output/5010_mtcircos_V2.png` and `output/5010_mtcircos_V2.svg`.
 
-The regenerated SVG matches the reference chromosome geometry, all 15 links, and all 39 highlight intervals. All 18 label names match; automatic label placement differs by at most approximately 2.6 pixels.
+The included PNG and SVG were generated with the supplied configuration and plotting inputs.
 
 These files reproduce the Circos plot from the existing BLAST results. Rerunning BLAST additionally requires the mitochondrial and nuclear genome FASTA files and BLAST+.
 
